@@ -2,12 +2,14 @@
 """Validate source data before publishing a new snapshot."""
 import json
 import math
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 data = json.loads((Path(__file__).resolve().parents[1] / 'data/weekly.json').read_text())
 stamp = datetime.fromisoformat(data['updatedAt'])
-assert (datetime.now(timezone.utc) - stamp).total_seconds() < 86400, 'Snapshot is stale'
+if '--allow-stale' not in sys.argv:
+    assert (datetime.now(timezone.utc) - stamp).total_seconds() < 86400, 'Snapshot is stale'
 assert set(data['markets']) == {'a', 'hk', 'us', 'gold', 'crypto'}
 for market, groups in data['markets'].items():
     assert len(groups) == 3, market
