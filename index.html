@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>Weekly Movers — 全球市场周涨跌工作台</title>
+  <meta name="description" content="追踪 A 股、港股、美股、黄金矿业和加密资产每周涨跌榜，按各市场市值筛选。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brand-mark">▲</span><span>Weekly Movers</span><span class="brand-divider"></span><span class="brand-sub">市场工作台</span></div><div class="top-right"><span class="live-dot"></span><span id="header-date">每周更新</span><a href="#method">数据说明 ↗</a></div></header>
+  <main class="shell">
+    <div class="eyebrow"><span class="eyebrow-line"></span>MARKET INTELLIGENCE <span class="eyebrow-sep">/</span> WEEKLY SNAPSHOT</div>
+    <div class="hero"><div><h1>每周涨跌，<span>一目了然。</span></h1><p>跨市场比较表现，快速定位本周的领涨与领跌资产。</p></div><div class="hero-meta"><span class="meta-label">最新快照</span><strong id="snapshot-date">加载中...</strong><span class="meta-small">每周六自动刷新</span></div></div>
+    <section class="toolbar" aria-label="筛选条件">
+      <div class="market-tabs" id="market-tabs" role="tablist"></div>
+      <div class="controls"><label class="select-wrap"><span>市值范围</span><select id="cap-select" aria-label="市值范围"></select></label><label class="select-wrap"><span>展示数量</span><select id="limit-select" aria-label="展示数量"><option value="10">Top 10</option><option value="25">Top 25</option></select></label></div>
+    </section>
+    <section class="context-bar"><div><span class="context-icon" id="context-icon">↗</span><strong id="market-title">市场</strong><span class="context-divider">/</span><span id="market-note"></span></div><div class="context-right"><span id="universe-count"></span><span class="context-dot">·</span><span id="cap-label"></span></div></section>
+    <section class="stats" aria-label="本周概览"><div class="stat"><span>最大涨幅</span><strong class="positive" id="max-gain">—</strong><small id="max-gain-name">—</small></div><div class="stat"><span>最大跌幅</span><strong class="negative" id="max-loss">—</strong><small id="max-loss-name">—</small></div><div class="stat"><span>榜单覆盖</span><strong id="coverage">—</strong><small>涨幅榜与跌幅榜</small></div><div class="stat"><span>数据口径</span><strong class="stat-text" id="period-label">周度</strong><small id="period-note">收盘价变动</small></div></section>
+    <div class="list-grid"><section class="leaderboard"><div class="list-heading"><div><span class="heading-marker gain-marker"></span><h2>涨幅榜</h2><span class="list-count" id="gain-count"></span></div><span>周涨幅</span></div><div id="gainers" class="rows"></div></section><section class="leaderboard"><div class="list-heading"><div><span class="heading-marker loss-marker"></span><h2>跌幅榜</h2><span class="list-count" id="loss-count"></span></div><span>周跌幅</span></div><div id="losers" class="rows"></div></section></div>
+    <section class="method" id="method"><div><span class="method-icon">i</span><strong>关于数据</strong></div><p id="method-text">股票采用 TradingView 周线价格变动，市值为各市场原币；加密资产采用 CoinGecko 7 日价格变动和美元市值。数据仅供市场观察。</p><div class="method-footer"><span>来源：<a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView ↗</a> <a href="https://www.coingecko.com/" target="_blank" rel="noopener">CoinGecko ↗</a></span><span id="updated-at"></span></div></section>
+  </main>
+  <footer><span>▲ Weekly Movers</span><span>全球市场周涨跌工作台 · 数据仅供参考</span></footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>
