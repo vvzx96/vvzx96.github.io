@@ -14,7 +14,7 @@ STABLECOINS = {"tether", "usd-coin", "dai", "usds", "ethena-usde", "first-digita
 MARKETS = {
     "a": {"scanner": "china", "bands": [(0, 5e9), (5e9, 10e9), (10e9, 50e9), (50e9, 200e9), (200e9, None)]},
     "hk": {"scanner": "hongkong", "bands": [(0, 2e9), (2e9, 10e9), (10e9, 100e9), (100e9, 500e9), (500e9, None)]},
-    "us": {"scanner": "america", "bands": [(0, 1e9), (1e9, 2e9), (2e9, 10e9), (10e9, 50e9), (50e9, None)]},
+    "us": {"scanner": "america", "bands": [(0, 1e9), (1e9, 2e9), (2e9, 10e9), (10e9, 50e9), (50e9, 200e9), (200e9, 500e9), (500e9, None)]},
     "gold": {"scanner": "america", "bands": [(0, 2e9), (2e9, 5e9), (5e9, 20e9), (20e9, 50e9), (50e9, None)]},
 }
 COLUMNS = ["name", "description", "close", "change|1W", "market_cap_basic", "volume", "currency"]
@@ -150,7 +150,7 @@ def main():
     history = path.parent / "history"
     history.mkdir(exist_ok=True)
     (history / f"{week_ending.isoformat()}.json").write_text(path.read_text())
-    weeks = sorted((p.stem for p in history.glob("????-??-??.json")), reverse=True)
+    weeks = sorted((p.stem for p in history.glob("????-??-??.json")), reverse=True)[:10]
     (history / "index.json").write_text(json.dumps(weeks, separators=(",", ":")) + "\n")
     print(f"Wrote {path} ({path.stat().st_size:,} bytes)")
 

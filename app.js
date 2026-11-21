@@ -1,11 +1,11 @@
 const MARKETS = {
   a: { label: 'A 股', title: 'A 股市场', note: '沪深上市股票', currency: 'CNY', caps: ['全部市值', '< ¥50亿', '¥50–100亿', '¥100–500亿', '¥500–2,000亿', '≥ ¥2,000亿'] },
   hk: { label: '港股', title: '香港市场', note: '港交所上市股票', currency: 'HKD', caps: ['全部市值', '< HK$20亿', 'HK$20–100亿', 'HK$100–1,000亿', 'HK$1,000–5,000亿', '≥ HK$5,000亿'] },
-  us: { label: '美股', title: '美国市场', note: 'NYSE / NASDAQ / AMEX', currency: 'USD', caps: ['全部市值', '< $10亿', '$10–20亿', '$20–100亿', '$100–500亿', '≥ $500亿'] },
+  us: { label: '美股', title: '美国市场', note: 'NYSE / NASDAQ / AMEX', currency: 'USD', caps: ['全部市值', '< $10亿', '$10–20亿', '$20–100亿', '$100–500亿', '$500–2,000亿', '$2,000–5,000亿', '≥ $5,000亿'] },
   gold: { label: '黄金', title: '黄金矿业', note: '美股上市黄金矿业与贵金属公司', currency: 'USD', caps: ['全部市值', '< $20亿', '$20–50亿', '$50–200亿', '$200–500亿', '≥ $500亿'] },
   crypto: { label: '加密货币', title: '加密资产', note: '按美元市值排名前 500 的资产', currency: 'USD', caps: ['全部市值', '< $1亿', '$1–10亿', '$10–50亿', '$50–100亿', '≥ $100亿'] }
 };
-const state = { market: 'us', cap: 5, limit: 10, data: null, weeks: [], latest: null };
+const state = { market: 'us', cap: 5, limit: 10, data: null, weeks: [], latest: null, weekRequest: 0 };
 const $ = id => document.getElementById(id);
 const html = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pct = value => `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
@@ -44,6 +44,9 @@ function render() {
   $('cap-select').innerHTML = config.caps.map((label, i) => `<option value="${i}">${label}</option>`).join('');
   $('cap-select').value = state.cap;
   $('week-select').value = state.data.weekEnding;
+  const weekIndex = state.weeks.indexOf(state.data.weekEnding);
+  $('older-week').disabled = weekIndex < 0 || weekIndex >= state.weeks.length - 1;
+  $('newer-week').disabled = weekIndex <= 0;
   $('limit-select').value = state.limit;
   $('market-title').textContent = config.title;
   $('market-note').textContent = config.note;
@@ -60,15 +63,19 @@ function render() {
   $('loss-count').textContent = `TOP ${losers.length}`;
   $('gainers').innerHTML = renderRows(gainers, 'gain');
   $('losers').innerHTML = renderRows(losers, 'loss');
-  $('method-text').textContent = state.market === 'crypto'
-    ? '加密资产来自 CoinGecko 市值排名前 500，涨跌幅为快照时点向前 7 日的价格变化；市值单位为美元。历史周从首次留存快照起可切换。数据仅供市场观察。'
-    : `股票涨跌幅和市值来自 TradingView，中文名称优先取自腾讯行情；无可用中文名称时保留英文。涨跌幅为周线价格变动，不含股息；市值按 ${config.currency} 分档。${state.market === 'gold' ? '黄金板块仅包含美股上市的黄金矿业与贵金属公司，不代表现货金走势。' : ''}榜单仅纳入价格高于 1、成交量高于 10 万的股票。历史周从首次留存快照起可切换。数据仅供市场观察。`;
+  const method = state.market === 'crypto'
+    ? '加密资产来自 CoinGecko 市值排名前 500，涨跌幅为快照时点向前 7 日的价格变化；市值单位为美元。可切换最近 10 个已结束交易周。数据仅供市场观察。'
+    : `股票涨跌幅和市值来自 TradingView，中文名称优先取自腾讯行情；无可用中文名称时保留英文。涨跌幅为周线价格变动，不含股息；市值按 ${config.currency} 分档。${state.market === 'gold' ? '黄金板块仅包含美股上市的黄金矿业与贵金属公司，不代表现货金走势。' : ''}榜单仅纳入价格高于 1、成交量高于 10 万的股票。可切换最近 10 个已结束交易周。数据仅供市场观察。`;
+  $('method-text').textContent = state.data.backfilled
+    ? `历史回填榜单以 ${state.data.universeAsOf} 的追踪样本为范围。股票历史收盘价来自腾讯行情，按相邻两周收盘价计算涨跌幅，未做拆股或分红复权；股票市值分档沿用 ${state.data.universeAsOf} 的市值。加密资产历史价格和市值来自 CoinPaprika、CoinGecko；无法核实的币种不纳入回填。回填榜单不代表当时全市场排名。`
+    : method;
 }
 
 function boot(data) {
-  if (!data?.weekEnding || !data?.markets || Object.keys(MARKETS).some(m => !Array.isArray(data.markets[m]) || data.markets[m].length !== 5)) throw new Error('数据结构不完整');
+  if (!data?.weekEnding || !data?.markets || Object.keys(MARKETS).some(m => !Array.isArray(data.markets[m]) || data.markets[m].length !== MARKETS[m].caps.length - 1)) throw new Error('数据结构不完整');
   state.data = data;
   const stamp = new Date(data.updatedAt);
+  document.querySelector('.meta-label').textContent = data.weekEnding === state.latest.weekEnding ? '最新快照' : '历史快照';
   $('snapshot-date').textContent = data.weekEnding;
   $('header-date').textContent = `${data.weekEnding} 周快照`;
   $('updated-at').textContent = `生成于 ${new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'short' }).format(stamp)}（北京时间）`;
@@ -84,18 +91,22 @@ $('market-tabs').addEventListener('click', event => {
 });
 $('cap-select').addEventListener('change', event => { state.cap = Number(event.target.value); render(); });
 $('limit-select').addEventListener('change', event => { state.limit = Number(event.target.value); render(); });
-$('week-select').addEventListener('change', async event => {
-  const week = event.target.value;
+async function switchWeek(week) {
+  const requestId = ++state.weekRequest;
   try {
     if (week === state.latest.weekEnding) return boot(state.latest);
     const response = await fetch(`./data/history/${week}.json`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    boot(await response.json());
+    const data = await response.json();
+    if (requestId === state.weekRequest) boot(data);
   } catch (error) {
     $('week-select').value = state.data.weekEnding;
     alert(`无法加载该周数据：${error.message}`);
   }
-});
+}
+$('week-select').addEventListener('change', event => switchWeek(event.target.value));
+$('older-week').addEventListener('click', () => switchWeek(state.weeks[state.weeks.indexOf(state.data.weekEnding) + 1]));
+$('newer-week').addEventListener('click', () => switchWeek(state.weeks[state.weeks.indexOf(state.data.weekEnding) - 1]));
 fetch('./data/weekly.json', { cache: 'no-store' }).then(response => {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
